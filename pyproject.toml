@@ -1,0 +1,43 @@
+[tool.poetry]
+name = "sitsfeats.py"
+version = "0.1.0"
+description = ""
+authors = ["Felipe Carlos <efelipecarlos@gmail.com>"]
+license = "MIT"
+readme = "README.md"
+packages = [{include = "sitsfeats"}]
+
+[project]
+name = "sitsfeats.py"
+version = "0.1.0"
+requires-python = ">=3.11"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+pybind11 = "^2.12.0"
+numpy = "^1.26.4"
+
+[tool.poetry.group.dev.dependencies]
+scikit-build-core = "^0.9.4"
+ruff = "^0.1.13"
+pytest = "^7.4.4"
+pre-commit = "^3.6.0"
+
+[tool.isort]
+profile = "black"
+line_length = 88
+skip_glob = [ "docs", "notes" ]
+
+[tool.ruff]
+select = [
+  "E",   # pycodestyle
+  "F",   # pyflakes
+  "UP",  # pyupgrade
+  "I",   # isort
+  "N",   # pep8 naming
+  "PL",  # pylint
+]
+
+[build-system]
+requires = ["scikit-build-core", "pybind11"]
+build-backend = "scikit_build_core.build"
