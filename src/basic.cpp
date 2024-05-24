@@ -129,21 +129,21 @@ arma::vec C_ts_iqr(const arma::mat& mtx) {
 }
 
 void init_basic_features(py::module &m) {
-    m.def("C_ts_max", &C_ts_max, "Time-series max");
-    m.def("C_ts_min", &C_ts_min, "Time-series min");
-    m.def("C_ts_mean", &C_ts_mean, "Time-series mean");    
-    m.def("C_ts_median", &C_ts_median, "Time-series median");
-    m.def("C_ts_sum", &C_ts_sum, "Time-series values sum");
-    m.def("C_ts_std", &C_ts_std, "Time-series standard deviation");
-    m.def("C_ts_skew", &C_ts_skew, "Time-series skew");
-    m.def("C_ts_kurt", &C_ts_kurt, "Time-series kurt");
-    m.def("C_ts_amplitude", &C_ts_amplitude, "Time-series amplitude");
-    m.def("C_ts_fslope", &C_ts_fslope, "Time-series F-Slope");
-    m.def("C_ts_abs_sum", &C_ts_abs_sum, "Time-series absolute sum");
-    m.def("C_ts_amd", &C_ts_amd, "Time-series AMD");
-    m.def("C_ts_mse", &C_ts_mse, "Time-series MSE");
-    m.def("C_ts_fqr", &C_ts_fqr, "Time-series FQR");
-    m.def("C_ts_sqr", &C_ts_sqr, "Time-series SQR");
-    m.def("C_ts_tqr", &C_ts_tqr, "Time-series TQR");
-    m.def("C_ts_iqr", &C_ts_iqr, "Time-series IQR");
+  m.def("C_ts_max", &C_ts_max, "Time-series max");
+  m.def("C_ts_min", &C_ts_min, "Time-series min");
+  m.def("C_ts_mean", &C_ts_mean, "Time-series mean");    
+  m.def("C_ts_median", &C_ts_median, "Time-series median");
+  m.def("C_ts_sum", &C_ts_sum, "Time-series values sum");
+  m.def("C_ts_std", &C_ts_std, "Time-series standard deviation");
+  m.def("C_ts_skew", &C_ts_skew, "Time-series skew");
+  m.def("C_ts_kurt", &C_ts_kurt, "Time-series kurt");
+  m.def("C_ts_amplitude", &C_ts_amplitude, "Time-series amplitude");
+  m.def("C_ts_fslope", &C_ts_fslope, "Time-series F-Slope");
+  m.def("C_ts_abs_sum", &C_ts_abs_sum, "Time-series absolute sum");
+  m.def("C_ts_amd", &C_ts_amd, "Time-series AMD");
+  m.def("C_ts_mse", &C_ts_mse, "Time-series MSE");
+  m.def("C_ts_fqr", &C_ts_fqr, "Time-series FQR");
+  m.def("C_ts_sqr", &C_ts_sqr, "Time-series SQR");
+  m.def("C_ts_tqr", &C_ts_tqr, "Time-series TQR");
+  m.def("C_ts_iqr", &C_ts_iqr, "Time-series IQR");
 }
