@@ -24,10 +24,22 @@ pip install git+https://github.com/m3nin0-labs/sitsfeats.py
 The `sitsfeats.py` package is designed for simplicity. It is simple to get started with it. Here's a quick example:
 
 ```python
-import sitsfeats
+from sitsfeats import feats
 
-ts_median_data = sitsfeats.ts_median(your_numpy_array)
+feats(['median', 'skew'], your-numpy-data)
+#> {'median': array([[5585. ],
+#>         [5049. ],
+#>         [6601.5],
+#>         [6047. ],
+#>         [4696. ]]),
+#>  'skew': array([[ 0.79073819],
+#>         [-0.03741349],
+#>         [ 0.34681313],
+#>         [ 0.29268245],
+#>         [-0.32793692]])}
 ```
+
+To learn more, please check the `examples` directory.
 
 ## Acknowledgments
 
