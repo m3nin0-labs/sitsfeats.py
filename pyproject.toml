@@ -1,42 +1,13 @@
-[tool.poetry]
-name = "sitsfeats.py"
-version = "0.1.0"
-description = "Efficient Python package for extracting metrics from satellite image time series"
-authors = ["Felipe Carlos <efelipecarlos@gmail.com>"]
-license = "MIT"
-readme = "README.md"
-packages = [{include = "sitsfeats"}]
-
-homepage = "https://github.com/m3nin0-labs/sitsfeats.py"
-repository = "https://github.com/m3nin0-labs/sitsfeats.py"
-keywords = [
-    "satellite",
-    "time-series",
-    "features",
-    "metrics",
-    "remote-sensing"
-]
-
-classifiers = [
-    "Development Status :: 4 - Beta",
-    "Intended Audience :: Science/Research",
-    "License :: OSI Approved :: MIT License",
-    "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12",
-    "Topic :: Scientific/Engineering",
-]
-
 [project]
 name = "sitsfeats.py"
-version = "0.1.0"
-description = "Efficient Python package for extracting metrics from satellite image time series"
+version = "0.2.0"
+description = "Python package for extracting metrics from satellite image time series"
 readme = "README.md"
 requires-python = ">=3.11"
-license = {text = "MIT"}
+license = { text = "MIT" }
 
 authors = [
-    {name = "Felipe Carlos", email = "efelipecarlos@gmail.com"}
+    { name = "Felipe Carlos", email = "efelipecarlos@gmail.com" },
 ]
 
 keywords = [
@@ -44,8 +15,9 @@ keywords = [
     "time-series",
     "features",
     "metrics",
-    "remote-sensing"
+    "remote-sensing",
 ]
+
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Science/Research",
@@ -60,30 +32,64 @@ dependencies = [
     "numpy>=1.26.4",
 ]
 
+[project.urls]
+Homepage = "https://github.com/m3nin0-labs/sitsfeats.py"
+Repository = "https://github.com/m3nin0-labs/sitsfeats.py"
+
 [project.optional-dependencies]
-dev = [
-    "ruff>=0.1.13",
+xarray = [
+    "xarray>=2023.1.0",
+    "dask[complete]>=2026.6.0"
+]
+
+table = [
+    "pandas>=3.0.3",
+]
+
+# Development dependency groups
+[dependency-groups]
+test = [
     "pytest>=7.4.4",
+    "scipy>=1.11",
+    "hypothesis>=6.0",
+    "xarray>=2023.1.0",
+    "dask>=2023.1.0",
+    "shapely>=2.0",
+    "pandas>=3.0.3"
+]
+
+docs = [
+    "mkdocs-material>=9.5",
+    "mkdocstrings[python]>=0.24",
+]
+
+dev = [
+    { include-group = "test" },
+    { include-group = "docs" },
+    "ruff>=0.1.13",
+    "mypy>=1.11",
+    "jupytext>=1.19",
     "pre-commit>=3.6.0",
 ]
 
-[tool.poetry.dependencies]
-python = "^3.11"
-pybind11 = "^2.12.0"
-numpy = "^1.26.4"
+[build-system]
+requires = [
+    "scikit-build-core>=0.9.4",
+    "nanobind>=2.0",
+    "cmake>=3.15",
+    "ninja",
+]
 
-[tool.poetry.group.dev.dependencies]
-scikit-build-core = "^0.9.4"
-ruff = "^0.1.13"
-pytest = "^7.4.4"
-pre-commit = "^3.6.0"
+build-backend = "scikit_build_core.build"
 
-[tool.isort]
-profile = "black"
-line_length = 88
-skip_glob = [ "docs", "notes" ]
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
 
-[tool.ruff]
+[tool.ruff.format]
+indent-style = "tab"
+
+[tool.ruff.lint]
 select = [
   "E",   # pycodestyle
   "F",   # pyflakes
@@ -93,19 +99,37 @@ select = [
   "PL",  # pylint
 ]
 
-[build-system]
-requires = [
-    "scikit-build-core>=0.9.4",
-    "pybind11>=2.12.0",
-    "cmake>=3.15",
-    "ninja",
-    "wheel",
+# W191/E101 conflict with the tab formatter (docstring bodies align with spaces).
+# The formatter owns indentation, so these pycodestyle rules are off.
+ignore = [
+  "W191",
+  "E101",
 ]
-build-backend = "scikit_build_core.build"
+
+[tool.ruff.lint.per-file-ignores]
+# Tests legitimately use literal tolerances/values and many local asserts.
+"tests/*" = ["PLR2004"]
+"examples/*" = ["E501"]
+
+[tool.ruff.lint.isort]
+# The compiled extension is our own first-party module.
+known-first-party = ["sitsfeats", "_sitsfeats"]
+
+[tool.mypy]
+python_version = "3.11"
+ignore_missing_imports = true
 
 [tool.scikit-build]
 # Build configuration for scikit-build-core
 wheel.expand-macos-universal-tags = true
+
+# The import package ("sitsfeats") differs from the distribution name
+# ("sitsfeats.py"), so it must be listed explicitly.
+wheel.packages = ["sitsfeats"]
+
+# When Eigen is vendored via FetchContent its own install() rules would
+# otherwise copy the whole header tree into the wheel. Drop those artefacts.
+wheel.exclude = ["include/**", "share/**"]
 cmake.version = ">=3.15"
 cmake.args = []
 

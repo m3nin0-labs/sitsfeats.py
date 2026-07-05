@@ -1,149 +1,227 @@
-#include <armadillo>
-#include <carma/carma.h>
+//
+// Copyright (C) 2024-2026 sitsfeats.py.
+//
+// sitsfeats.py is free software; you can redistribute it and/or modify it
+// under the terms of the MIT License; see LICENSE file for more details.
+//
+// Basic time-series metrics.
+//
+// Convention: each row of the input matrix is a time series; reductions run
+// along the columns (time), producing one value per row.
+//
 
-#include <pybind11/stl.h>
-#include <pybind11/numpy.h>
-#include <pybind11/pybind11.h>
+#include "metrics.h"
 
-namespace py = pybind11;
+#include <algorithm>
+#include <cmath>
+#include <vector>
 
-// global variables
-arma::vec P_025 = {0.25};
-arma::vec P_050 = {0.50};
-arma::vec P_075 = {0.75};
+namespace {
 
-// Max
-arma::vec C_ts_max(const arma::mat& mtx) {
-  return arma::max(mtx, 1);
+// Per-row centered deviations (x - row mean) as an array expression source.
+Eigen::ArrayXXd centered(const Mat& m) {
+  return m.array().colwise() - m.rowwise().mean().array();
 }
 
+// p-quantile of every row using the Hazen plotting position, preserved from
+// the original Armadillo implementation so numeric output is unchanged.
+// numpy equivalent: ``np.quantile(x, p, axis=1, method="hazen")``.
+Eigen::VectorXd row_quantile(const Mat& m, double p) {
+  // get the number of rows and columns
+  const Eigen::Index n = m.rows();
+  const Eigen::Index c = m.cols();
+
+  // initialize the output vector
+  Eigen::VectorXd out(n);
+
+  // iterate over the rows
+  std::vector<double> row(static_cast<std::size_t>(c));
+
+  for (Eigen::Index i = 0; i < n; ++i) {
+
+    // in this row, we will store the values
+    for (Eigen::Index j = 0; j < c; ++j) {
+      row[static_cast<std::size_t>(j)] = m(i, j);
+    }
+
+    // sort the row
+    std::sort(row.begin(), row.end());
+
+    // Hazen: 1-based fractional rank h = p * c + 0.5, clamped to [1, c].
+    const double h = std::clamp(
+      p * static_cast<double>(c) + 0.5, 1.0, static_cast<double>(c)
+    );
+
+    // get the lower index
+    const double lo = std::floor(h);
+
+    // get the 0-based lower index
+    const auto k = static_cast<std::size_t>(lo) - 1;
+
+    // get the interpolation factor
+    const double g = h - lo;
+
+    // compute the quantile
+    out(i) = (g == 0.0 || k + 1 >= static_cast<std::size_t>(c))
+              ? row[k]
+              : row[k] + g * (row[k + 1] - row[k]);
+  }
+
+  // return!
+  return out;
+}
+
+// Max
+Eigen::VectorXd ts_max(const Mat& m) { 
+  return m.rowwise().maxCoeff();
+ }
+
 // Min
-arma::vec C_ts_min(const arma::mat& mtx) {
-  return arma::min(mtx, 1);
+Eigen::VectorXd ts_min(const Mat& m) { 
+  return m.rowwise().minCoeff();
 }
 
 // Mean
-arma::vec C_ts_mean(const arma::mat& mtx) {
-
-  return arma::mean(mtx, 1);
+Eigen::VectorXd ts_mean(const Mat& m) { 
+  return m.rowwise().mean();
 }
 
-// Median
-arma::vec C_ts_median(const arma::mat& mtx) {
-
-  return arma::median(mtx, 1);
+// Median (Hazen 0.5-quantile equals the standard median)
+Eigen::VectorXd ts_median(const Mat& m) { 
+  return row_quantile(m, 0.50);
 }
 
 // Sum
-arma::vec C_ts_sum(const arma::mat& mtx) {
-
-  return arma::sum(mtx, 1);
+Eigen::VectorXd ts_sum(const Mat& m) { 
+  return m.rowwise().sum();
 }
 
-// Standard deviation
-arma::vec C_ts_std(const arma::mat& mtx) {
+// Standard deviation (sample, ddof = 1)
+Eigen::VectorXd ts_std(const Mat& m) {
+  // get the number of columns
+  const double c = static_cast<double>(m.cols());
 
-  return arma::stddev(mtx, 0, 1);
+  // compute the squared centered deviations
+  Eigen::ArrayXd m2 = centered(m).square().rowwise().sum();
+
+  // compute the standard deviation
+  return (m2 / (c - 1.0)).sqrt().matrix();
 }
 
-// Skew
-arma::vec C_ts_skew(const arma::mat& mtx) {
-  // skewness based on adjusted Fisher-Pearson coefficient
-  const int n = mtx.n_cols;
-  const double expS = 1.5;
+// Skewness: adjusted Fisher-Pearson standardized moment coefficient (G1)
+Eigen::VectorXd ts_skew(const Mat& m) {
+  // get the number of columns
+  const double c = static_cast<double>(m.cols());
+  
+  // compute the centered deviations
+  Eigen::ArrayXXd cen = centered(m);
 
-  // adjusted factor
-  double adj_factor = sqrt((n*(n-1)))/n-2;
+  // compute the squared centered deviations
+  Eigen::ArrayXd m2 = cen.square().rowwise().sum();
+  Eigen::ArrayXd m3 = cen.cube().rowwise().sum();
 
-  arma::vec m3 = arma::sum(arma::pow(mtx.each_col()- arma::mean(mtx, 1), 3), 1)/n;
-  arma::vec s = arma::pow(arma::sum(arma::pow(mtx.each_col()- arma::mean(mtx, 1), 2), 1)/n, expS);
+  // compute the factor
+  const double factor = std::sqrt(c * (c - 1.0)) / (c - 2.0);
 
-  return (m3/s)*adj_factor;
+  // compute the skewness
+  Eigen::ArrayXd g1 = (m3 / c) / (m2 / c).pow(1.5);
+
+  // return!
+  return (factor * g1).matrix();
 }
 
-// Kurt
-arma::vec C_ts_kurt(const arma::mat& mtx) {
-  // kurtosis based on pearson’s definition is used (normal ==> 3.0)
-  const int n = mtx.n_cols;
+// Kurtosis (Pearson's definition, non-excess; normal distribution == 3.0)
+Eigen::VectorXd ts_kurt(const Mat& m) {
+  // get the number of columns
+  const double c = static_cast<double>(m.cols());
 
-  arma::vec m4 = arma::sum(arma::pow(mtx.each_col()- arma::mean(mtx, 1), 4), 1);
-  arma::vec m2 = arma::pow(arma::sum(arma::pow(mtx.each_col()- arma::mean(mtx, 1), 2), 1), 2);
+  // compute the centered deviations
+  Eigen::ArrayXXd cen = centered(m);
+  Eigen::ArrayXd m2 = cen.square().rowwise().sum();
+  Eigen::ArrayXd m4 = cen.square().square().rowwise().sum();
 
-  return n*m4/m2;
+  // compute the kurtosis
+  return (c * m4 / (m2 * m2)).matrix();
 }
 
-// Amplitude
-arma::vec C_ts_amplitude(const arma::mat& mtx) {
-  return arma::max(mtx, 1) - arma::min(mtx, 1);
+// Amplitude (max - min)
+Eigen::VectorXd ts_amplitude(const Mat& m) {
+  return m.rowwise().maxCoeff() - m.rowwise().minCoeff();
 }
 
-// F-Slope
-arma::vec C_ts_fslope(const arma::mat& mtx) {
+// F-Slope: maximum absolute first difference.
+Eigen::VectorXd ts_fslope(const Mat& m) {
+  // if there are less than 2 columns, return zeros
+  if (m.cols() < 2) {
+    return Eigen::VectorXd::Zero(m.rows());
+  }
 
-  return arma::max(arma::abs(arma::diff(mtx, 1, 1)), 1);
+  // get the number of columns
+  Eigen::Index c = m.cols();
+
+  // compute the absolute first differences
+  return (m.rightCols(c - 1) - m.leftCols(c - 1))
+          .cwiseAbs()
+          .rowwise()
+          .maxCoeff();
 }
 
-// Absolute sum
-arma::vec C_ts_abs_sum(const arma::mat& mtx) {
+// Absolute sum.
+Eigen::VectorXd ts_abs_sum(const Mat& m) { 
+  return m.cwiseAbs().rowwise().sum();
+ }
 
-  return arma::sum(arma::abs(mtx), 1);
+// AMD: mean absolute first difference.
+Eigen::VectorXd ts_amd(const Mat& m) {
+  // if there are less than 2 columns, return zeros
+  if (m.cols() < 2) {
+    return Eigen::VectorXd::Zero(m.rows());
+  }
+
+  // get the number of columns
+  Eigen::Index c = m.cols();
+
+  // compute the absolute first differences
+  return (m.rightCols(c - 1) - m.leftCols(c - 1)).cwiseAbs().rowwise().mean();
 }
 
-// AMD
-arma::vec C_ts_amd(const arma::mat& mtx) {
-
-  return arma::mean(arma::abs(arma::diff(mtx, 1, 1)), 1);
+// MSE: mean power spectrum. By Parseval's theorem the mean of |FFT|^2 over all
+// frequency bins equals the sum of squared samples, so no FFT is required.
+Eigen::VectorXd ts_mse(const Mat& m) {
+  return m.array().square().rowwise().sum().matrix();
 }
 
-// MSE
-arma::vec C_ts_mse(const arma::mat& mtx) {
-  arma::mat metrics = mtx.t();
+// First quartile.
+Eigen::VectorXd ts_fqr(const Mat& m) { 
+  return row_quantile(m, 0.25);
+ }
 
-  return arma::mean(arma::pow(arma::abs(arma::trans(arma::fft(metrics))), 2), 1);
+// Third quartile.
+Eigen::VectorXd ts_tqr(const Mat& m) { 
+  return row_quantile(m, 0.75);
 }
 
-// FQR
-arma::vec C_ts_fqr(const arma::mat& mtx) {
-
-  return arma::quantile(mtx, P_025, 1);
+// Interquartile range.
+Eigen::VectorXd ts_iqr(const Mat& m) {
+  return row_quantile(m, 0.75) - row_quantile(m, 0.25);
 }
+}  // namespace
 
-// SQR
-arma::vec C_ts_sqr(const arma::mat& mtx) {
-
-  return arma::quantile(mtx, P_050, 1);
-}
-
-// TQR
-arma::vec C_ts_tqr(const arma::mat& mtx) {
-
-  return arma::quantile(mtx, P_075, 1);
-}
-
-// IQR
-arma::vec C_ts_iqr(const arma::mat& mtx) {
-
-  arma::vec res = C_ts_tqr(mtx) - C_ts_fqr(mtx);
-
-  return (res);
-}
-
-void init_basic_features(py::module &m) {
-  m.def("C_ts_max", &C_ts_max, "Time-series max");
-  m.def("C_ts_min", &C_ts_min, "Time-series min");
-  m.def("C_ts_mean", &C_ts_mean, "Time-series mean");    
-  m.def("C_ts_median", &C_ts_median, "Time-series median");
-  m.def("C_ts_sum", &C_ts_sum, "Time-series values sum");
-  m.def("C_ts_std", &C_ts_std, "Time-series standard deviation");
-  m.def("C_ts_skew", &C_ts_skew, "Time-series skew");
-  m.def("C_ts_kurt", &C_ts_kurt, "Time-series kurt");
-  m.def("C_ts_amplitude", &C_ts_amplitude, "Time-series amplitude");
-  m.def("C_ts_fslope", &C_ts_fslope, "Time-series F-Slope");
-  m.def("C_ts_abs_sum", &C_ts_abs_sum, "Time-series absolute sum");
-  m.def("C_ts_amd", &C_ts_amd, "Time-series AMD");
-  m.def("C_ts_mse", &C_ts_mse, "Time-series MSE");
-  m.def("C_ts_fqr", &C_ts_fqr, "Time-series FQR");
-  m.def("C_ts_sqr", &C_ts_sqr, "Time-series SQR");
-  m.def("C_ts_tqr", &C_ts_tqr, "Time-series TQR");
-  m.def("C_ts_iqr", &C_ts_iqr, "Time-series IQR");
+void register_basic_metrics(std::vector<MetricDescriptor>& reg) {
+  reg.push_back({"max", "basic", "Maximum value", &ts_max});
+  reg.push_back({"min", "basic", "Minimum value", &ts_min});
+  reg.push_back({"mean", "basic", "Arithmetic mean", &ts_mean});
+  reg.push_back({"median", "basic", "Median (second quartile)", &ts_median});
+  reg.push_back({"sum", "basic", "Sum of values", &ts_sum});
+  reg.push_back({"std", "basic", "Sample standard deviation (ddof=1)", &ts_std});
+  reg.push_back({"skew", "basic", "Adjusted Fisher-Pearson skewness", &ts_skew});
+  reg.push_back({"kurt", "basic", "Kurtosis (Pearson, non-excess)", &ts_kurt});
+  reg.push_back({"amplitude", "basic", "Range (max - min)", &ts_amplitude});
+  reg.push_back({"fslope", "basic", "Maximum absolute first difference", &ts_fslope});
+  reg.push_back({"abs_sum", "basic", "Sum of absolute values", &ts_abs_sum});
+  reg.push_back({"amd", "basic", "Mean absolute first difference", &ts_amd});
+  reg.push_back({"mse", "basic", "Mean power spectrum (sum of squares)", &ts_mse});
+  reg.push_back({"fqr", "basic", "First quartile (Q1)", &ts_fqr});
+  reg.push_back({"tqr", "basic", "Third quartile (Q3)", &ts_tqr});
+  reg.push_back({"iqr", "basic", "Interquartile range (Q3 - Q1)", &ts_iqr});
 }
