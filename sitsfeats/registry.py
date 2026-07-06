@@ -10,7 +10,10 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
-from typing import NamedTuple
+from typing import TYPE_CHECKING, NamedTuple
+
+if TYPE_CHECKING:
+	import pandas as pd
 
 
 class MetricInfo(NamedTuple):
@@ -159,13 +162,10 @@ class MetricTable(Sequence):
 		"""
 		return [record._asdict() for record in self._records]
 
-	def to_pandas(self):
+	def to_pandas(self) -> pd.DataFrame:
 		"""Metric records as a pandas DataFrame.
 
 		Returns:
-		    pandas.DataFrame: The metric records as a pandas DataFrame.
-
-		Requires:
 		    pandas.DataFrame: The metric records as a pandas DataFrame.
 		"""
 		import pandas as pd  # noqa: PLC0415 - optional, imported only on demand
