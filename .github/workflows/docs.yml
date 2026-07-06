@@ -1,6 +1,8 @@
 name: Docs
 
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
     inputs:
       reason:
@@ -23,6 +25,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
       - name: Build site
         run: uv run --group docs mkdocs build --strict
       - uses: actions/upload-pages-artifact@v3
