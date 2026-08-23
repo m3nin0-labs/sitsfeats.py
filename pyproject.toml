@@ -1,5 +1,5 @@
 [project]
-name = "sitsfeats.py"
+name = "sitsfeats"
 version = "0.2.0"
 description = "Python package for extracting metrics from satellite image time series"
 readme = "README.md"
@@ -123,8 +123,8 @@ ignore_missing_imports = true
 # Build configuration for scikit-build-core
 wheel.expand-macos-universal-tags = true
 
-# The import package ("sitsfeats") differs from the distribution name
-# ("sitsfeats.py"), so it must be listed explicitly.
+# The import package and the distribution share the name "sitsfeats", but
+# scikit-build-core still needs it listed explicitly.
 wheel.packages = ["sitsfeats"]
 
 # When Eigen is vendored via FetchContent its own install() rules would
