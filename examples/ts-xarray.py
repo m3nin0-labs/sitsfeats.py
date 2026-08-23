@@ -12,7 +12,7 @@
 # The same `feats` entry point also accepts a labelled `xarray` cube, a `(time, y, x)` stack of satellite observations, and returns a `Dataset` with one variable per metric, keeping the spatial coordinates and attributes. This path needs the optional dependency:
 #
 # ```shell
-# pip install "sitsfeats.py[xarray]"
+# pip install "sitsfeats[xarray]"
 # ```
 #
 # Run it with `uv run --extra xarray python examples/ts-xarray.py`, or open it as a notebook (the `# %%` cells load directly in Jupyter and VS Code).

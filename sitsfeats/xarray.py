@@ -16,7 +16,7 @@ cubes are handled transparently.
 
 This module requires the optional `xarray` dependency::
 
-    pip install "sitsfeats.py[xarray]"
+    pip install "sitsfeats[xarray]"
 """
 
 import numpy as np
@@ -27,7 +27,7 @@ try:
 except ImportError as exc:  # pragma: no cover - exercised only without xarray
 	raise ImportError(
 		"sitsfeats.xarray requires xarray. Install it with: "
-		'pip install "sitsfeats.py[xarray]"'
+		'pip install "sitsfeats[xarray]"'
 	) from exc
 
 import _sitsfeats
