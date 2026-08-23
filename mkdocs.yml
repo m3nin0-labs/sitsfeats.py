@@ -31,7 +31,6 @@ nav:
   - Home: index.md
   - Installation: installation.md
   - Usage: usage.md
-  - Data cubes (xarray): xarray.md
   - Metrics catalogue: metrics.md
   - API reference: api.md
 

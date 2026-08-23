@@ -1,21 +1,8 @@
 # Metrics catalogue
 
-Every metric reduces a time series $x = (x_1, \dots, x_N)$ of $N$ observations to
-a single value. The live list is always available via [`metrics()`](api.md#sitsfeatsmetrics). This page presents the formulation of each metric implemented in the package.
-
-!!! note "Conventions"
-    - **Standard deviation** is the *sample* deviation (`ddof = 1`).
-    - **Skewness** is the adjusted Fisher–Pearson coefficient
-      (`scipy.stats.skew(..., bias=False)`).
-    - **Kurtosis** is Pearson's (non-excess) definition: $3.0$ for a normal
-      distribution.
-    - **Quantiles** use the **Hazen** plotting position
-      (`numpy.quantile(..., method="hazen")`).
+Every metric reduces a time series $x = (x_1, \dots, x_N)$ of $N$ observations to a single value. This page gives the formulation of each one. The live list is always available via [`metrics()`](api.md#sitsfeatsmetrics).
 
 ## Basic family
-
-Let $\bar{x}$ be the mean and $m_k = \tfrac{1}{N}\sum_i (x_i-\bar{x})^k$ the
-$k$-th central moment.
 
 | Name | Description | Definition |
 |------|-------------|------------|
@@ -36,16 +23,16 @@ $k$-th central moment.
 | `tqr` | Third quartile | $Q_3$ (Hazen) |
 | `iqr` | Interquartile range | $Q_3 - Q_1$ |
 
+In the moment-based definitions above, $\bar{x}$ is the mean and $m_k = \tfrac{1}{N}\sum_i (x_i-\bar{x})^k$ is the $k$-th central moment.
+
+A few conventions are worth stating, since implementations differ on them. The standard deviation is the *sample* deviation, `ddof = 1`. Skewness is the adjusted Fisher–Pearson coefficient, matching `scipy.stats.skew(..., bias=False)`. Kurtosis follows Pearson's non-excess definition, so a normal distribution gives $3.0$. Quantiles use the Hazen plotting position, matching `numpy.quantile(..., method="hazen")`.
+
 !!! info "`mse`"
     By Parseval's theorem, the mean of $\lvert \text{FFT} \rvert^2$ over all
     frequency bins equals the sum of squared samples, so `mse` is computed
     directly as $\sum_i x_i^2$, with no FFT.
 
 ## Polar family
-
-The polar metrics follow the Körting *polar plot* representation used by [stmetrics](https://github.com/brazil-data-cube/stmetrics), and are verified against its Shapely-based implementation.
-
-**Construction.** Each observation is placed on a circle: vertex $i$ at angle $\theta_i = \tfrac{2\pi i}{N}$ with radius $r_i = \lvert x_i \rvert$, i.e. the Cartesian point $(r_i\cos\theta_i,\; r_i\sin\theta_i)$. Connecting consecutive vertices yields a closed polygon $P$. Because radii are non-negative and the vertices are ordered by angle, $P$ is star-shaped about the origin and therefore simple (non-self-intersecting).
 
 | Name | Description | Definition |
 |------|-------------|------------|
@@ -55,6 +42,10 @@ The polar metrics follow the Körting *polar plot* representation used by [stmet
 | `csi` | Cell shape index | $\dfrac{\text{perimeter}(P)^2}{4\pi\,\text{area}(P)}$ |
 | `area_q1`…`area_q4` | Seasonal quadrant areas | area of $P$ within each Cartesian quadrant |
 | `polar_balance` | Seasonal balance | standard deviation of the four quadrant areas |
+
+The polygon $P$ these definitions refer to is the Körting *polar plot* representation used by [stmetrics](https://github.com/brazil-data-cube/stmetrics), against whose Shapely-based implementation these metrics are verified.
+
+It is built by placing each observation on a circle: vertex $i$ sits at angle $\theta_i = \tfrac{2\pi i}{N}$ with radius $r_i = \lvert x_i \rvert$, that is, at the Cartesian point $(r_i\cos\theta_i,\; r_i\sin\theta_i)$. Connecting consecutive vertices closes the polygon. Because radii are non-negative and the vertices are ordered by angle, $P$ is star-shaped about the origin and therefore simple, never self-intersecting.
 
 The quadrants partition the plane at the origin (`area_q1` = upper-right, `area_q2` = upper-left, `area_q3` = lower-left, `area_q4` = lower-right) and act as the four "seasons" of the cycle.
 

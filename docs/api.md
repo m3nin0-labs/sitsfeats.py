@@ -2,7 +2,7 @@
 
 ## `sitsfeats.feats`
 
-The single entry point. Dispatches on the input type: a NumPy array returns a [`Features`](#sitsfeatsfeatures), or an xarray cube returns an `xarray.Dataset` (see [Data cubes](xarray.md)).
+The single entry point. Dispatches on the input type: a NumPy array returns a [`Features`](#sitsfeatsfeatures), or an xarray cube returns an `xarray.Dataset` (see [Working with data cubes](usage.md#working-with-data-cubes)).
 
 ::: sitsfeats.feats.feats
 
