@@ -1,4 +1,4 @@
-## sitsfeats.py ⌛
+# sitsfeats.py ⌛
 
 Python package for extracting metrics from satellite image time series. 
 
@@ -59,13 +59,7 @@ To learn more, work through the step-by-step [jupytext](https://jupytext.readthe
 
 ### Metrics available
 
-The metrics available in the `sitsfeats.py` are grouped into two families:
-
-**Basic** (16): `max`, `min`, `mean`, `median`, `sum`, `std`, `skew`, `kurt`, `amplitude`, `fslope`, `abs_sum`, `amd`, `mse`, `fqr`, `tqr`, `iqr`.
-
-**Polar** (9): Körting polar-plot metrics, including `area_ts`, `angle`, `gyration_radius`, `csi`, `area_q1`, `area_q2`, `area_q3`, `area_q4`, `polar_balance`
-
-The full list is available at runtime via `metrics()`:
+To see the metrics available in `sitsfeats.py`, it is possible to use the command `metrics`:
 
 ```python
 from sitsfeats import metrics
@@ -103,4 +97,4 @@ We would like to thank the developers and contributors of the [sitsfeats (R)](ht
 
 ### License
 
-`sitsfeats.py` is distributed under the MIT license. See [LICENSE](./LICENSE) for more details.
+`sitsfeats.py` is distributed under the MIT license. See [LICENSE](https://github.com/m3nin0-labs/sitsfeats.py/blob/main/LICENSE) for more details.
